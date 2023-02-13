@@ -1,19 +1,43 @@
+# 環境変数
+
+# - ./mysql/data:/var/lib/mysql
+# - ./sql/dcl.sql:/docker-entrypoint-initdb.d/dcl.sql
 version: '3.9'
 
 services:
+  app:
+    build:
+      context: .
+    container_name: app
+    ports:
+      - 3000:3000
+      - 5555:5555
+    tty: true
+    # volumes:
+    #   - ./src:/app
+    # command: sh -c "npm run dev"
+    # volumes:
+    #   - ./:/app
+    # working_dir: /app
+    # command: sh -c "npm run dev"
+    depends_on:
+      - db
   db:
     image: mysql:8.0.32
-    # container_name: mysql_host
+    container_name: db
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: gyoza
-      MYSQL_USER: gyoza
-      MYSQL_PASSWORD: password
-      TZ: 'Asia/Tokyo'
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
     volumes:
-    - ./db/data:/var/lib/mysql
-    - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
-    - ./db/sql:/docker-entrypoint-initdb.d
+      - mysql-store:/var/lib/mysql
+      - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf
+      # - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./script:/docker-entrypoint-initdb.d
     ports:
-    - 3306:3306
-
+      - ${MYSQL_PORT}:3306
+volumes:
+  mysql-store:

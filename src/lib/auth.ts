@@ -1,9 +1,11 @@
+// https://next-auth.js.org/getting-started/typescript#module-augmentation
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { db } from '@/lib/db'
 
 export const authOptions: NextAuthOptions = {
+  // TODO: type
   adapter: PrismaAdapter(db as any),
   session: {
     strategy: 'jwt',
@@ -15,10 +17,7 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       // The name to display on the sign in form (e.g. "Sign in with...")
       name: 'Credentials',
-      // `credentials` is used to generate a form on the sign in page.
-      // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
-      // You can pass any HTML attribute to the <input> tag through the object.
+
       credentials: {
         username: { label: 'Username', type: 'text', placeholder: 'jsmith' },
         password: { label: 'Password', type: 'password' },
@@ -40,8 +39,10 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ token, session }) {
-      if (token && session.user) {
+    // TODO: type
+    async session({ token, session }: any) {
+      console.log('🤢call session', 'token => ', token, 'session => ', session)
+      if (token) {
         session.user.id = token.id
         session.user.name = token.name
         session.user.email = token.email
@@ -50,24 +51,29 @@ export const authOptions: NextAuthOptions = {
 
       return session
     },
-    async jwt({ token, user }) {
-      const dbUser = await db.user.findFirst({
-        where: {
-          email: token.email,
-        },
-      })
+    // TODO: type
+    async jwt({ token, user }: any) {
+      console.log('😁call jwt', 'token => ', token, 'user => ', user)
+      token.id = user.id
+      return token
 
-      if (!dbUser) {
-        token.id = user.id
-        return token
-      }
+      // const dbUser = await db.user.findFirst({
+      //   where: {
+      //     email: token.email,
+      //   },
+      // })
 
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        picture: dbUser.image,
-      }
+      // if (!dbUser) {
+      //   token.id = user.id
+      //   return token
+      // }
+
+      // return {
+      //   id: dbUser.id,
+      //   name: dbUser.name,
+      //   email: dbUser.email,
+      //   picture: dbUser.image,
+      // }
     },
   },
 }
