@@ -10,9 +10,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  // pages: {
-  //   signIn: '/login',
-  // },
+  pages: {
+    signIn: '/login',
+  },
+  secret: 'hogehoge',
   providers: [
     CredentialsProvider({
       // The name to display on the sign in form (e.g. "Sign in with...")
@@ -24,6 +25,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         // Add logic here to look up the user from the credentials supplied
+        console.log(credentials)
         const user = { id: '1', name: 'J Smith', email: 'jsmith@example.com' }
 
         if (user) {
@@ -42,20 +44,22 @@ export const authOptions: NextAuthOptions = {
     // TODO: type
     async session({ token, session }: any) {
       console.log('🤢call session', 'token => ', token, 'session => ', session)
-      if (token) {
-        session.user.id = token.id
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.image = token.picture
-      }
+      // if (token) {
+      session.user.id = token.id
+      session.user.name = token.name
+      session.user.email = token.email
+      session.user.image = token.picture
+      // }
 
       return session
     },
     // TODO: type
     async jwt({ token, user }: any) {
       console.log('😁call jwt', 'token => ', token, 'user => ', user)
-      token.id = user.id
-      return token
+      // token.id = user.id
+      // user.name = 'fuck'
+      // return token
+      return { name: 'hoge', email: 'jwt@test.cc' }
 
       // const dbUser = await db.user.findFirst({
       //   where: {

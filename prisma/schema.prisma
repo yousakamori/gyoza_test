@@ -39,11 +39,19 @@ model Session {
   @@map("sessions")
 }
 
+
+enum Role {
+  MEMBER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
+  passwordDigest String @map("password_digest")
+  role          Role     @default(MEMBER)
   image         String?
   accounts      Account[]
   sessions      Session[]
