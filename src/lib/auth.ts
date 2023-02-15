@@ -1,5 +1,5 @@
-// https://next-auth.js.org/getting-started/typescript#module-augmentation
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
+import bcrypt from 'bcryptjs'
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { db } from '@/lib/db'
@@ -13,71 +13,68 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
-  secret: 'hogehoge',
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       // The name to display on the sign in form (e.g. "Sign in with...")
       name: 'Credentials',
-
+      // TODO: 必要なの？
       credentials: {
-        username: { label: 'Username', type: 'text', placeholder: 'jsmith' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'email', type: 'email' },
+        password: { label: 'password', type: 'password' },
       },
       async authorize(credentials, req) {
-        // Add logic here to look up the user from the credentials supplied
-        console.log(credentials)
-        const user = { id: '1', name: 'J Smith', email: 'jsmith@example.com' }
+        // TODO: type
+        const { email, password } = credentials as { email: string; password: string }
 
-        if (user) {
-          // Any object returned will be saved in `user` property of the JWT
-          return user
-        } else {
-          // If you return null then an error will be displayed advising the user to check their details.
+        const dbUser = await db.user.findFirst({
+          where: {
+            email,
+          },
+        })
+
+        if (!dbUser) {
           return null
-
-          // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
         }
+
+        const compared = await bcrypt.compare(password, dbUser.passwordDigest)
+
+        return compared ? dbUser : null
       },
     }),
   ],
   callbacks: {
     // TODO: type
-    async session({ token, session }: any) {
+    async session({ token, session }) {
       console.log('🤢call session', 'token => ', token, 'session => ', session)
-      // if (token) {
-      session.user.id = token.id
-      session.user.name = token.name
-      session.user.email = token.email
-      session.user.image = token.picture
-      // }
+      if (token) {
+        session.user.id = token.id
+        session.user.name = token.name
+        session.user.email = token.email
+        session.user.image = token.picture
+      }
 
       return session
     },
     // TODO: type
-    async jwt({ token, user }: any) {
-      console.log('😁call jwt', 'token => ', token, 'user => ', user)
-      // token.id = user.id
-      // user.name = 'fuck'
-      // return token
-      return { name: 'hoge', email: 'jwt@test.cc' }
+    async jwt({ token, user }) {
+      const dbUser = await db.user.findFirst({
+        where: {
+          email: token.email,
+        },
+      })
 
-      // const dbUser = await db.user.findFirst({
-      //   where: {
-      //     email: token.email,
-      //   },
-      // })
+      if (!dbUser) {
+        token.id = user.id
+        return token
+      }
 
-      // if (!dbUser) {
-      //   token.id = user.id
-      //   return token
-      // }
-
-      // return {
-      //   id: dbUser.id,
-      //   name: dbUser.name,
-      //   email: dbUser.email,
-      //   picture: dbUser.image,
-      // }
+      return {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        picture: dbUser.image,
+      }
     },
   },
 }

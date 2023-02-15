@@ -8,5 +8,10 @@ export default async function TestPage() {
     return <p>not logged in</p>
   }
 
-  return <h1>{session?.user?.name}</h1>
+  return (
+    <div>
+      <p>{session?.user?.name}</p>
+      <p>{session?.user?.email}</p>
+    </div>
+  )
 }
