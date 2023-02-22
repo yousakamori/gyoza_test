@@ -16,16 +16,17 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
-      // The name to display on the sign in form (e.g. "Sign in with...")
       name: 'Credentials',
-      // TODO: 必要なの？
       credentials: {
         email: { label: 'email', type: 'email' },
         password: { label: 'password', type: 'password' },
       },
       async authorize(credentials, req) {
-        // TODO: type
-        const { email, password } = credentials as { email: string; password: string }
+        if (!credentials) {
+          return null
+        }
+
+        const { email, password } = credentials
 
         const dbUser = await db.user.findFirst({
           where: {
@@ -44,7 +45,6 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    // TODO: type
     async session({ token, session }) {
       console.log('🤢call session', 'token => ', token, 'session => ', session)
       if (token) {
@@ -52,10 +52,12 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name
         session.user.email = token.email
         session.user.image = token.picture
+        session.user.role = token.role
       }
 
       return session
     },
+    // jwt コールバックが呼び出され、セッション コールバックでブラウザにデータを渡します。
     // TODO: type
     async jwt({ token, user }) {
       const dbUser = await db.user.findFirst({
@@ -64,17 +66,21 @@ export const authOptions: NextAuthOptions = {
         },
       })
 
-      if (!dbUser) {
-        token.id = user.id
-        return token
+      if (dbUser) {
+        console.log('💽 db user', dbUser, token)
+        return {
+          id: dbUser.id,
+          name: dbUser.name,
+          email: dbUser.email,
+          picture: dbUser.image,
+          role: dbUser.role,
+        }
       }
 
-      return {
-        id: dbUser.id,
-        name: dbUser.name,
-        email: dbUser.email,
-        picture: dbUser.image,
-      }
+      // token.id = user?.id
+
+      console.log('👩🏻‍💻 token user', token)
+      return token
     },
   },
 }

@@ -30,10 +30,11 @@ export function UserAuthForm() {
   async function onSubmit(data: FormData) {
     setIsLoading(true)
 
+    // TODO: redirect settings
     const signInResult = await signIn('credentials', {
       email: data.email.toLowerCase(),
       password: data.password,
-      redirect: true,
+      // redirect: true,
       callbackUrl: '/test',
       //   redirect: false,
       //   callbackUrl: searchParams.get('from') || '/dashboard',
@@ -47,11 +48,11 @@ export function UserAuthForm() {
       //     message: 'Your sign in request failed. Please try again.',
       //     type: 'error',
       //   })
-      alert('error')
+      // alert('error')
       return
     }
 
-    alert('success')
+    // alert('success')
 
     // return toast({
     //   title: 'Check your email',
@@ -98,7 +99,9 @@ export function UserAuthForm() {
               disabled={isLoading}
               {...register('password')}
             />
-            {errors?.email && <p className='px-1 text-xs text-red-600'>{errors.email.message}</p>}
+            {errors?.password && (
+              <p className='px-1 text-xs text-red-600'>{errors.password.message}</p>
+            )}
           </div>
           <button
             className='inline-flex w-full items-center justify-center rounded-lg bg-[#24292F] px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-[#24292F]/90 focus:outline-none focus:ring-4 focus:ring-[#24292F]/50 disabled:opacity-50 dark:hover:bg-[#050708]/30 dark:focus:ring-slate-500'
